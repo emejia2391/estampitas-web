@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Estampitas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <header>
+        <div>
+            <h1>Inventario de Estampitas Mundial 2026</h1>
+            <p>Ingreso, venta y consulta de stock por código o nombre.</p>
+        </div>
+        <a class="link" href="{{ url_for('recalcular_todo') }}">Recalcular stock</a>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <section class="cards">
+        <div class="card">
+            <span>Inventario ingresado</span>
+            <strong>{{ total_inventario }}</strong>
+        </div>
+        <div class="card">
+            <span>Ventas registradas</span>
+            <strong>{{ total_venta }}</strong>
+        </div>
+        <div class="card">
+            <span>Stock disponible</span>
+            <strong>{{ total_stock }}</strong>
+        </div>
+    </section>
+
+    <section class="forms">
+        <form action="{{ url_for('ingresar') }}" method="POST" class="panel">
+            <h2>Ingresar estampitas</h2>
+            <label>Código de estampita</label>
+            <input type="text" name="cod_estampa" placeholder="Ej: MEX01" required>
+            <label>Cantidad</label>
+            <input type="number" name="cantidad" min="1" value="1" required>
+            <button type="submit">Agregar a inventario</button>
+        </form>
+
+        <form action="{{ url_for('vender') }}" method="POST" class="panel">
+            <h2>Vender estampitas</h2>
+            <label>Código de estampita</label>
+            <input type="text" name="cod_estampa" placeholder="Ej: FRA2" required>
+            <label>Cantidad</label>
+            <input type="number" name="cantidad" min="1" value="1" required>
+            <button type="submit" class="sell">Registrar venta</button>
+        </form>
+    </section>
+
+    <section class="search-box">
+        <form method="GET" action="{{ url_for('index') }}">
+            <input type="text" name="q" value="{{ q }}" placeholder="Buscar por cod_estampa, nombre o selección">
+            <button type="submit">Buscar</button>
+            <a href="{{ url_for('index') }}">Limpiar</a>
+        </form>
+    </section>
+
+    <section class="table-card">
+        <h2>Resultado</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Selección</th>
+                        <th>Inventario</th>
+                        <th>Venta</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in estampitas %}
+                    <tr>
+                        <td>{{ item.cod_estampa }}</td>
+                        <td>{{ item.nombre }}</td>
+                        <td>{{ item.seleccion }}</td>
+                        <td>{{ item.inventario }}</td>
+                        <td>{{ item.venta }}</td>
+                        <td class="stock">{{ item.stock }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty">No se encontraron resultados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+</body>
+</html>
