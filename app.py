@@ -50,13 +50,29 @@ def recalcular_stock(cur, cod_estampa):
 @app.route("/")
 def index():
     q = request.args.get("q", "").strip()
+    ordenar = request.args.get("ordenar", "cod_estampa").strip()
+
+    columnas_validas = {
+        "cod_estampa": "cod_estampa",
+        "nombre": "nombre",
+        "seleccion": "seleccion"
+    }
+
+    ordenar_sql = columnas_validas.get(ordenar, "cod_estampa")
+
+    total_inventario = 0
+    total_venta = 0
+    total_stock = 0
+    estampitas = []
 
     try:
         with get_conn() as conn:
             with conn.cursor() as cur:
                 if q:
+                    filtros = (f"%{q}%", f"%{q}%", f"%{q}%")
+
                     cur.execute(
-                        """
+                        f"""
                         SELECT cod_estampa, nombre, seleccion,
                                COALESCE(inventario, 0) AS inventario,
                                COALESCE(venta, 0) AS venta,
@@ -65,34 +81,40 @@ def index():
                         WHERE cod_estampa ILIKE %s
                            OR nombre ILIKE %s
                            OR seleccion ILIKE %s
-                        ORDER BY cod_estampa
-                        LIMIT 100
+                        ORDER BY {ordenar_sql}
+                        LIMIT 300
                         """,
-                        (f"%{q}%", f"%{q}%", f"%{q}%")
+                        filtros
                     )
-                else:
+                    estampitas = cur.fetchall()
+
                     cur.execute(
                         """
-                        SELECT cod_estampa, nombre, seleccion,
-                               COALESCE(inventario, 0) AS inventario,
-                               COALESCE(venta, 0) AS venta,
-                               COALESCE(stock, 0) AS stock
+                        SELECT
+                            COALESCE(SUM(inventario), 0) AS total_inventario,
+                            COALESCE(SUM(venta), 0) AS total_venta,
+                            COALESCE(SUM(stock), 0) AS total_stock
                         FROM estampitas
-                        ORDER BY cod_estampa
-                        LIMIT 100
-                        """
+                        WHERE cod_estampa ILIKE %s
+                           OR nombre ILIKE %s
+                           OR seleccion ILIKE %s
+                        """,
+                        filtros
                     )
+                    totales = cur.fetchone()
+                    total_inventario = totales["total_inventario"]
+                    total_venta = totales["total_venta"]
+                    total_stock = totales["total_stock"]
 
-                estampitas = cur.fetchall()
+                else:
+                    cur.execute("SELECT COALESCE(SUM(inventario), 0) AS total FROM estampitas")
+                    total_inventario = cur.fetchone()["total"]
 
-                cur.execute("SELECT COALESCE(SUM(inventario), 0) AS total FROM estampitas")
-                total_inventario = cur.fetchone()["total"]
+                    cur.execute("SELECT COALESCE(SUM(venta), 0) AS total FROM estampitas")
+                    total_venta = cur.fetchone()["total"]
 
-                cur.execute("SELECT COALESCE(SUM(venta), 0) AS total FROM estampitas")
-                total_venta = cur.fetchone()["total"]
-
-                cur.execute("SELECT COALESCE(SUM(stock), 0) AS total FROM estampitas")
-                total_stock = cur.fetchone()["total"]
+                    cur.execute("SELECT COALESCE(SUM(stock), 0) AS total FROM estampitas")
+                    total_stock = cur.fetchone()["total"]
 
     except Exception as e:
         return f"""
@@ -105,6 +127,7 @@ def index():
         "index.html",
         estampitas=estampitas,
         q=q,
+        ordenar=ordenar,
         total_inventario=total_inventario,
         total_venta=total_venta,
         total_stock=total_stock

@@ -62,6 +62,13 @@
     <section class="search-box">
         <form method="GET" action="{{ url_for('index') }}">
             <input type="text" name="q" value="{{ q }}" placeholder="Buscar por cod_estampa, nombre o selección">
+
+            <select name="ordenar" class="select-order">
+                <option value="cod_estampa" {% if ordenar == 'cod_estampa' %}selected{% endif %}>Ordenar por código</option>
+                <option value="nombre" {% if ordenar == 'nombre' %}selected{% endif %}>Ordenar por nombre</option>
+                <option value="seleccion" {% if ordenar == 'seleccion' %}selected{% endif %}>Ordenar por selección</option>
+            </select>
+
             <button type="submit">Buscar</button>
             <a href="{{ url_for('index') }}">Limpiar</a>
         </form>
