@@ -67,8 +67,9 @@
         </form>
     </section>
 
+    {% if q %}
     <section class="table-card">
-        <h2>Resultado</h2>
+        <h2>Resultado de búsqueda</h2>
         <div class="table-wrap">
             <table>
                 <thead>
@@ -100,6 +101,7 @@
             </table>
         </div>
     </section>
+    {% endif %}
 </div>
 </body>
 </html>
